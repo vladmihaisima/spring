@@ -49,25 +49,24 @@ CVertexArray* GetVertexArray()
 
 void PrintAvailableResolutions()
 {
-	char buffer[1024];
-	int n = 0;
+	std::string modes;
 
 	// Get available fullscreen/hardware modes
 	//FIXME this checks only the main screen
-	for (int i=SDL_GetNumDisplayModes(0) - 1; i>=0; --i) {
+	const int nummodes = SDL_GetNumDisplayModes(0);
+	for (int i = (nummodes-1); i >= 0; --i) { // reverse order to print them from low to high
 		SDL_DisplayMode mode;
 		SDL_GetDisplayMode(0, i, &mode);
-		n += SNPRINTF(&buffer[n], 1024-n, "%dx%d, ", mode.w, mode.h);
+		if (!modes.empty()) {
+			modes += ", ";
+		}
+		modes += IntToString(mode.w) + "x" + IntToString(mode.h);
+	}
+	if (nummodes < 1) {
+		modes = "NONE";
 	}
 
-	// remove last comma
-	if (n >= 2) {
-		buffer[n - 2] = '\0';
-	}
-	if (n == 0) {
-		SNPRINTF(&buffer[n], 1024-n, "NONE");
-	}
-	LOG("Supported Video modes: %s", buffer);
+	LOG("Supported Video modes: %s", modes.c_str());
 }
 
 #ifdef GL_ARB_debug_output
@@ -384,6 +383,28 @@ void WorkaroundATIPointSizeBug()
 }
 
 /******************************************************************************/
+
+void glSpringTexStorage2D(const GLenum target, GLint levels, const GLint internalFormat, const GLsizei width, const GLsizei height)
+{
+#ifdef GLEW_ARB_texture_storage
+	if (levels < 0)
+		levels = std::ceil(std::log(std::max(width, height) + 1));
+
+	if (GLEW_ARB_texture_storage) {
+		glTexStorage2D(target, levels, internalFormat, width, height);
+	} else
+#endif
+	{
+		GLenum format = GL_RGBA, type = GL_UNSIGNED_BYTE;
+		switch (internalFormat) {
+			case GL_RGBA8: format = GL_RGBA; type = GL_UNSIGNED_BYTE; break;
+			case GL_RGB8:  format = GL_RGB;  type = GL_UNSIGNED_BYTE; break;
+			default: LOG_L(L_ERROR, "[%s] Couldn't detct format& type for %i", __FUNCTION__, internalFormat);
+		}
+		glTexImage2D(target, 0, internalFormat, width, height, 0, format, type, nullptr);
+	}
+}
+
 
 void glBuildMipmaps(const GLenum target, GLint internalFormat, const GLsizei width, const GLsizei height, const GLenum format, const GLenum type, const void* data)
 {
