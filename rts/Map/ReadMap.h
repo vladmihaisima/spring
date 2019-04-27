@@ -6,6 +6,7 @@
 #include <array>
 #include <vector>
 
+#include "HeightFieldWaterUpdater.h"
 #include "MapTexture.h"
 #include "MapDimensions.h"
 #include "Sim/Misc/GlobalConstants.h"
@@ -157,6 +158,7 @@ public:
 	/// synced only
 	const float* GetOriginalHeightMapSynced() const { return &originalHeightMap[0]; }
 	const float* GetCenterHeightMapSynced() const { return &centerHeightMap[0]; }
+	const float* GetHeightWaterMapSynced() const { return &waterMapRho[0]; }
 	const float* GetMIPHeightMapSynced(unsigned int mip) const { return mipPointerHeightMaps[mip]; }
 	const float* GetSlopeMapSynced() const { return &slopeMap[0]; }
 	const uint8_t* GetTypeMapSynced() const { return &typeMap[0]; }
@@ -232,6 +234,11 @@ protected:
 	static std::vector<float> centerHeightMap;          //< size: (mapx  )*(mapy  ) (per face) [SYNCED, updates on terrain deformation]
 	static std::array<std::vector<float>, numHeightMipMaps - 1> mipCenterHeightMaps;
 
+	// Height field water vectors (rho - quantity of water, flow - rate of change)
+	std::vector<float> waterMapRho;          //< size: (mapx  )*(mapy  ) (per face) [SYNCED, updates on terrain deformation]
+	std::vector<float> waterMapFlowX;        //< size: (mapx  )*(mapy  ) (per face) [SYNCED, updates on terrain deformation]
+	std::vector<float> waterMapFlowY;        //< size: (mapx  )*(mapy  ) (per face) [SYNCED, updates on terrain deformation]
+
 	/**
 	 * array of pointers to heightmaps in different resolutions
 	 * mipPointerHeightMaps[0  ] is full resolution (centerHeightMap)
@@ -277,6 +284,8 @@ private:
 	float2 currHeightBounds; //< current minimum- and maximum-height
 
 	float boundingRadius = 0.0f;
+        
+        friend class IHeightFieldWaterUpdater;
 };
 
 

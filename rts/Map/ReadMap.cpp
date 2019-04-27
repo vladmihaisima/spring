@@ -11,6 +11,7 @@
 #include "Rendering/Env/MapRendering.h"
 #include "SMF/SMFReadMap.h"
 #include "Game/LoadScreen.h"
+#include "Game/GameSetup.h"
 #include "System/bitops.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
@@ -178,6 +179,33 @@ CReadMap* CReadMap::LoadMap(const std::string& mapName)
 	if (typemapPtr != nullptr)
 		rm->FreeInfoMap("type", typemapPtr);
 
+        if(gameSetup->heightFieldWater==1) {
+            MapBitmapInfo wbi;
+            unsigned char* watermapPtr = rm->GetInfoMap("water", &mbi);
+
+            if(watermapPtr == nullptr) {
+                // No dedicated water height, we fill only the portions with 
+                // height less than 0 (as 0 is the default water level)
+                
+                // TODO(vladms): should be given values according to water height
+                for(int x=0;x<mapDims.mapx;x++) {
+                        for(int y=0;y<mapDims.mapy;y++) {
+                                if(rm->centerHeightMap[y*mapDims.mapx+x]<0) {
+                                        rm->waterMapRho[y*mapDims.mapx+x] = -rm->centerHeightMap[y*mapDims.mapx+x];
+                                };
+                                
+                                // TODO (vlamds): for debug, remove later
+                                if(x>mapDims.mapx/2 && y>mapDims.mapy/2) {
+                                        rm->waterMapRho[y*mapDims.mapx+x] = 200;
+                                }
+                        }
+                }
+            } else {
+                // TODO (vladms): do the conversion
+                LOG_L(L_WARNING, "[CReadMap::%s] water map loading not implemented for map \"%s\"", __func__, mapName.c_str());
+            }
+        }
+
 	return rm;
 }
 
@@ -316,6 +344,10 @@ void CReadMap::Initialize()
 	centerNormals2D.resize(mapDims.mapx * mapDims.mapy);
 	centerHeightMap.clear();
 	centerHeightMap.resize(mapDims.mapx * mapDims.mapy);
+
+	waterMapRho.resize(mapDims.mapx * mapDims.mapy);
+	waterMapFlowX.resize(mapDims.mapx * mapDims.mapy);
+	waterMapFlowY.resize(mapDims.mapx * mapDims.mapy);
 
 	mipPointerHeightMaps.fill(nullptr);
 	mipPointerHeightMaps[0] = &centerHeightMap[0];

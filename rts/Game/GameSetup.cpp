@@ -588,6 +588,7 @@ bool CGameSetup::Init(const std::string& buf)
 	hostDemo    = !demoName.empty();
 
 	file.GetTDef(gameStartDelay, 4u, "GAME\\GameStartDelay");
+	file.GetTDef(heightFieldWater, 1u, "GAME\\HeightFieldWater");
 
 	file.GetDef(recordDemo,          "1", "GAME\\RecordDemo");
 	file.GetDef(useLuaGaia,          "1", "GAME\\ModOptions\\LuaGaia");

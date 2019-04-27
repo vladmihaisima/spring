@@ -55,6 +55,8 @@
 #include "Lua/LuaParser.h"
 #include "Lua/LuaSyncedRead.h"
 #include "Lua/LuaUI.h"
+#include "Map/HeightFieldWaterUpdater.h"
+#include "Map/HeightFieldWaterUpdaterBasic.h"
 #include "Map/MapDamage.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
@@ -469,6 +471,8 @@ void CGame::LoadMap(const std::string& mapFileName)
 		// simulation components
 		helper->Init();
 		readMap = CReadMap::LoadMap(mapFileName);
+                // TODO (vladms): make a factory function that chooses one updater
+                mapHeightFieldWaterUpdater = new CHeightFieldWaterUpdaterBasic(readMap);
 
 		// half size; building positions are snapped to multiples of 2*SQUARE_SIZE
 		buildingMaskMap.Init(mapDims.hmapx * mapDims.hmapy);
@@ -1531,6 +1535,8 @@ void CGame::SimFrame() {
 
 		helper->Update();
 		mapDamage->Update();
+                mapHeightFieldWaterUpdater->Update();
+                
 		pathManager->Update();
 		unitHandler.Update();
 		projectileHandler.Update();

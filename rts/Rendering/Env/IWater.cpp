@@ -3,6 +3,7 @@
 #include "IWater.h"
 #include "ISky.h"
 #include "BasicWater.h"
+#include "HeightFieldWaterBasic.h"
 #include "AdvWater.h"
 #include "BumpWater.h"
 #include "DynWater.h"
@@ -65,7 +66,10 @@ IWater* IWater::GetWater(IWater* curRenderer, int nxtRendererMode)
 		GLEW_ARB_fragment_program && GLEW_ARB_texture_float && ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB, "ARB/waterDyn.fp"),
 		GLEW_ARB_fragment_program && GLEW_ARB_texture_rectangle,
 		GLEW_ARB_shading_language_100 && GLEW_ARB_fragment_shader && GLEW_ARB_vertex_shader,
+                true
 	};
+        
+        // TODO (vladms): adjust allowed modes based on HeightFieldWater (not all modes support it)
 
 	IWater* nxtRenderer = nullptr;
 
@@ -130,6 +134,17 @@ IWater* IWater::GetWater(IWater* curRenderer, int nxtRendererMode)
 				} catch (const content_error& ex) {
 					spring::SafeDelete(nxtRenderer);
 					LOG_L(L_ERROR, "Loading Reflective Water failed, error: %s", ex.what());
+				}
+			} break;
+                        
+                        
+                                
+			case HEIGHT_FIELD_WATER_RENDERER_BASIC: {
+				try {
+					nxtRenderer = new CHeightFieldWaterBasic();
+				} catch (const content_error& ex) {
+					spring::SafeDelete(nxtRenderer);
+					LOG_L(L_ERROR, "Loading Height Field Water renderer failed, error: %s", ex.what());
 				}
 			} break;
 		}

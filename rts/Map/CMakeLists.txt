@@ -5,6 +5,8 @@ set(sources_engine_Map
 		"${CMAKE_CURRENT_SOURCE_DIR}/BaseGroundDrawer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/BasicMapDamage.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Ground.cpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/HeightFieldWaterUpdater.cpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/HeightFieldWaterUpdaterBasic.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/HeightLinePalette.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/HeightMapTexture.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/MapDamage.cpp"

@@ -46,6 +46,7 @@ public:
 		mapSeed = gs.mapSeed;
 
 		gameStartDelay = gs.gameStartDelay;
+		heightFieldWater = gs.heightFieldWater;
 
 		numDemoPlayers = gs.numDemoPlayers;
 		maxUnitsPerTeam = gs.maxUnitsPerTeam;
@@ -198,6 +199,12 @@ public:
 	 * Default: 4 (seconds)
 	 */
 	unsigned int gameStartDelay;
+
+	/**
+	 * Set to 1 to activate height field water in map and units behavior.
+	 * Default: 0
+	 */
+	unsigned int heightFieldWater;
 
 	int numDemoPlayers;
 	int maxUnitsPerTeam;
