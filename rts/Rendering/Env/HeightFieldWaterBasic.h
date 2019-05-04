@@ -17,12 +17,25 @@ public:
 	const char* GetName() const { return "height field basic"; }
 
 private:
-	unsigned int GenWaterDynamicQuadsList(unsigned int textureWidth, unsigned int textureHeight) const;
+	unsigned int GenWaterDynamicQuadsList(unsigned int textureWidth, unsigned int textureHeight);
+        
+        void drawTile(const float* centerHeightMap, const float* heightWaterMap, 
+            int x, int y, int dx, int dy, float repeatX, float repeatY);
+        
+        void drawWaterLOD(const float* centerHeightMap, const float* heightWaterMap, 
+            int x, int y, int tileX, int tileY, float repeatX, float repeatY);
 
 	unsigned int textureID;
 	unsigned int displistID;
         
         unsigned int tx,ty;
+        
+        const float mapSizeX;
+	const float mapSizeY;
+        
+        const float threshold;
+        
+        const float alpha;
 };
 
 #endif // HEIGHT_FIELD_WATER_BASIC_H
