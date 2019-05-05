@@ -59,41 +59,73 @@ void CHeightFieldWaterBasic::drawTile(const float* centerHeightMap, const float*
     float h_x_y1 = heightWaterMap[(y + dy) * mapDims.mapx + x] + centerHeightMap[(y + dy) * mapDims.mapx + x];
     float h_x1_y1 = heightWaterMap[(y + dy) * mapDims.mapx + x + dx] + centerHeightMap[(y + dy) * mapDims.mapx + x + dx];
 
-    h_x_y = (hW_x_y>0.001) ? h_x_y : h_x_y - 1;
-    h_x1_y = (hW_x1_y>0.001) ? h_x1_y : h_x1_y - 1;
-    h_x_y1 = (hW_x_y1>0.001) ? h_x_y1 : h_x_y1 - 1;
-    h_x1_y1 = (hW_x1_y1>0.001) ? h_x1_y1 : h_x1_y1 - 1;
+    // If the water level is very low, adjust it to draw at same level as another
+    // point of the triangle
+    h_x_y = (hW_x_y>threshold) ? h_x_y : (h_x1_y> threshold ? h_x1_y : h_x_y1);
+    h_x1_y = (hW_x1_y>threshold) ? h_x1_y : (h_x_y1> threshold ? h_x_y1 : h_x_y1);
+    h_x_y1 = (hW_x_y1>threshold) ? h_x_y1 : (h_x1_y> threshold ? h_x1_y : h_x_y1);
+    h_x1_y1 = (hW_x1_y1>threshold) ? h_x1_y1 : (h_x1_y> threshold ? h_x1_y : h_x_y1);
     
     float sumdiff;
         
-    // First triangle
-    sumdiff = fabs ((heightWaterMap[y * mapDims.mapx + x] + centerHeightMap[y * mapDims.mapx + x])
-       - (heightWaterMap[(y + dy + 1) * mapDims.mapx + x] + centerHeightMap[(y + dy + 1) * mapDims.mapx + x])) / 30;
-    //glColor4f (0.7f * sumdiff, 0.7f * sumdiff, 0.7f * sumdiff, alpha);
-    glColor4f (1,0,0, alpha);
+    // First triangle, draw if it has one point with water
+    if(hW_x_y > threshold || hW_x1_y > threshold || hW_x1_y1 > threshold) {
+        if (hW_x_y > threshold) {
+            if (hW_x1_y < threshold) h_x1_y = h_x_y;
+            if (hW_x_y1 < threshold) h_x_y1 = h_x_y;
+        } else if (hW_x1_y > threshold) {
+            if (hW_x_y < threshold) h_x_y = h_x1_y;
+            if (hW_x_y1 < threshold) h_x_y1 = h_x1_y;
+        } else {
+            if (hW_x_y < threshold) h_x_y = h_x_y1;
+            if (hW_x1_y < threshold) h_x1_y = h_x_y1;
+        }
+        
+        sumdiff = fabs ((heightWaterMap[y * mapDims.mapx + x] + centerHeightMap[y * mapDims.mapx + x])
+           - (heightWaterMap[(y + dy + 1) * mapDims.mapx + x] + centerHeightMap[(y + dy + 1) * mapDims.mapx + x])) / 30;
+        //glColor4f (0.7f * sumdiff, 0.7f * sumdiff, 0.7f * sumdiff, alpha);
+        glColor4f (1,0,0, alpha);
 
-    glTexCoord2f (x * repeatX, y * repeatY);
-    glVertex3f (x * mapSizeX / mapDims.mapx, h_x_y, y * mapSizeY / mapDims.mapy);
+        glTexCoord2f (x * repeatX, y * repeatY);
+        glVertex3f (x * mapSizeX / mapDims.mapx, h_x_y, y * mapSizeY / mapDims.mapy);
 
-    glTexCoord2f (x * repeatX, (y + 1) * repeatY);
-    glVertex3f (x * mapSizeX / mapDims.mapx, h_x_y1, (y + dy) * mapSizeY / mapDims.mapy);
+        glTexCoord2f (x * repeatX, (y + 1) * repeatY);
+        glVertex3f (x * mapSizeX / mapDims.mapx, h_x_y1, (y + dy) * mapSizeY / mapDims.mapy);
 
-    glTexCoord2f ((x + 1) * repeatX, y * repeatY);
-    glVertex3f ((x + dx) * mapSizeX / mapDims.mapx, h_x1_y, y * mapSizeY / mapDims.mapy);
+        glTexCoord2f ((x + 1) * repeatX, y * repeatY);
+        glVertex3f ((x + dx) * mapSizeX / mapDims.mapx, h_x1_y, y * mapSizeY / mapDims.mapy);
+    }
 
-    // Second triangle
-    sumdiff = fabs ((heightWaterMap[(y + dy) * mapDims.mapx + x + dx] + centerHeightMap[(y + dy) * mapDims.mapx + x + dx]) - 
-            (heightWaterMap[y * mapDims.mapx + x + dx] + centerHeightMap[y * mapDims.mapx + x + dx])) / 30;
-    glColor4f (0.7f * sumdiff, 0.7f * sumdiff, 0.7f * sumdiff, alpha);
+    // Might be changed by previous if
+    h_x1_y = heightWaterMap[y * mapDims.mapx + x + dx] + centerHeightMap[y * mapDims.mapx + x + dx];
+    h_x_y1 = heightWaterMap[(y + dy) * mapDims.mapx + x] + centerHeightMap[(y + dy) * mapDims.mapx + x];
 
-    glTexCoord2f ((x + 1) * repeatX, (y + 1) * repeatY);
-    glVertex3f ((x + dx) * mapSizeX / mapDims.mapx, h_x1_y1, (y + dy) * mapSizeY / mapDims.mapy);
+    // Second triangle, draw if it has one point with water
+    if(hW_x1_y1 > threshold || hW_x1_y > threshold || hW_x_y1 > threshold) {
+        if (hW_x1_y1 > threshold) {
+            if (hW_x1_y < threshold) h_x1_y = h_x1_y1;
+            if (hW_x_y1 < threshold) h_x_y1 = h_x1_y1;
+        } else if (hW_x1_y > threshold) {
+            if (hW_x1_y1 < threshold) h_x1_y1 = h_x1_y;
+            if (hW_x_y1 < threshold) h_x_y1 = h_x1_y;
+        } else {
+            if (hW_x1_y1 < threshold) h_x1_y1 = h_x_y1;
+            if (hW_x1_y < threshold) h_x1_y = h_x_y1;
+        }
+        
+        sumdiff = fabs ((heightWaterMap[(y + dy) * mapDims.mapx + x + dx] + centerHeightMap[(y + dy) * mapDims.mapx + x + dx]) - 
+                (heightWaterMap[y * mapDims.mapx + x + dx] + centerHeightMap[y * mapDims.mapx + x + dx])) / 30;
+        glColor4f (0.7f * sumdiff, 0.7f * sumdiff, 0.7f * sumdiff, alpha);
 
-    glTexCoord2f ((x + 1) * repeatX, y * repeatY);
-    glVertex3f ((x + dx) * mapSizeX / mapDims.mapx, h_x1_y, y * mapSizeY / mapDims.mapy);
+        glTexCoord2f ((x + 1) * repeatX, (y + 1) * repeatY);
+        glVertex3f ((x + dx) * mapSizeX / mapDims.mapx, h_x1_y1, (y + dy) * mapSizeY / mapDims.mapy);
 
-    glTexCoord2f (x * repeatX, (y + 1) * repeatY);
-    glVertex3f (x * mapSizeX / mapDims.mapx, h_x_y1, (y + dy) * mapSizeY / mapDims.mapy);
+        glTexCoord2f ((x + 1) * repeatX, y * repeatY);
+        glVertex3f ((x + dx) * mapSizeX / mapDims.mapx, h_x1_y, y * mapSizeY / mapDims.mapy);
+
+        glTexCoord2f (x * repeatX, (y + 1) * repeatY);
+        glVertex3f (x * mapSizeX / mapDims.mapx, h_x_y1, (y + dy) * mapSizeY / mapDims.mapy);
+    }
 }
 
  void CHeightFieldWaterBasic::drawWaterLOD(const float* centerHeightMap, const float* heightWaterMap, 
@@ -106,7 +138,7 @@ void CHeightFieldWaterBasic::drawTile(const float* centerHeightMap, const float*
     // We check all corners of the tiles, hence the less than equal test
     for (int x1 = x; x1 <= x + tileX; x1++) {
         for (int y1 = y; y1 <= y + tileY; y1++) {
-            if(heightWaterMap[y * mapDims.mapx + x] <  threshold) {
+            if(heightWaterMap[y1 * mapDims.mapx + x1] <  threshold) {
                 closeToGround = true;
                 break;
             }
