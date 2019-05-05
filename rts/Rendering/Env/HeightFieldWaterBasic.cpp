@@ -171,7 +171,7 @@ CHeightFieldWaterBasic::GenWaterDynamicQuadsList (unsigned int textureWidth, uns
 
         // We consider lodGridSize x lodGridSize squares when drawing water that
         // does not intersect land.
-        unsigned lodGridSize = 4;
+        unsigned lodGridSize = 8;
 
 	for (int x = 0; x < mapDims.mapx - lodGridSize; x += lodGridSize) {
             for (int y = 0; y < mapDims.mapy - lodGridSize; y += lodGridSize) {

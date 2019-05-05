@@ -6,10 +6,12 @@
 CHeightFieldWaterUpdaterBasic::CHeightFieldWaterUpdaterBasic(CReadMap* map):IHeightFieldWaterUpdater(map) {
 }
 
+// Returns new water height in a cell, based on the difference with its neighbor
 float flow_adjust(float diff, float r)
 {
     float r_new;
     if(diff > 0) {
+        // The other cell is higher, water flows to the current cell
         if(diff<r) {
             
             r_new = (r - diff)/2+diff;
@@ -18,6 +20,7 @@ float flow_adjust(float diff, float r)
             r_new = r;
         }
     } else {
+        // The other cell is lower, water flows out of the current cell
         if(-diff<r) {
             r_new = (r + diff)/2;
         } else {
@@ -35,9 +38,13 @@ void CHeightFieldWaterUpdaterBasic::UpdateStep() {
     const float* const centerHeightMap = map->GetCenterHeightMapSynced();
   
     float* heightWaterMap = this->GetHeightWaterMap();
-    float* waterMapFlowX = this->GetWaterMapFlowX();
+    
+    // How much water flows from cell x,y to cell x-1, y
+    float* waterMapFlowX = this->GetWaterMapFlowX(); 
+    
+    // How much water flows from cell x,y to cell x, y-1
     float* waterMapFlowY = this->GetWaterMapFlowY();
-
+    
     float volumeInitial = 0, volumeNew = 0;
     
     const float THRESHOLD = 0.1f;
@@ -52,93 +59,68 @@ void CHeightFieldWaterUpdaterBasic::UpdateStep() {
     if(volumeInitial < THRESHOLD) {
         return;
     }
+    
+    // We make an "approximation" - the edges of the map are considered to be 
+    // an infinite height wall. This means there will be no flow from/to those
+    // locations, and we do not update/compute them.
 
 #define ATTENUATION 0.98
 #define LIMIT_EXECS 3
 
     // Compute the flows in cell x,y based on the water and terrain height of
-    // neighbor cells
+    // neighbor cells. 
     for (int x = 1; x < mapDims.mapxm1; x++) {
         for (int y = 1; y < mapDims.mapym1; y++) {
 
-            float rho;      // Water density
-            float rho_new;  // New water density
+            float rho;      // Total water in current and neighbor cell
+            float rho_new;  // New water height in current cell
             float diff;     // Height difference between neighbor cell and current 
 
-            // Adjust the flow on X axis
+            // Adjust the flow on X axis.
             rho = heightWaterMap[x - 1 + mapDims.mapx * y] + heightWaterMap[x + mapDims.mapx * y];
             diff = centerHeightMap[x - 1 + mapDims.mapx * y] - centerHeightMap[x + mapDims.mapx * y];
-            
             if (x == 1) {
+                // We consider the map has an infinite wall at x = 0, so we bypass the actual values
                 rho = heightWaterMap[x + mapDims.mapx * y];
                 diff = std::numeric_limits<float>::infinity();
             }
             rho_new = flow_adjust (diff, rho);
 
+            // Based on the difference between how much water the cell should have
+            // and what it has, we adjust the flow
             waterMapFlowX[x + mapDims.mapx * y] += (rho_new - heightWaterMap[x + mapDims.mapx * y]);
             waterMapFlowX[x + mapDims.mapx * y] *= ATTENUATION;
 
             // Adjust the flow on Y axis
             rho = heightWaterMap[x + mapDims.mapx * (y - 1)] + heightWaterMap[x + mapDims.mapx * y];
             diff = centerHeightMap[x + mapDims.mapx * (y - 1)] - centerHeightMap[x + mapDims.mapx * y];
-// TODO: fix somehow else
             if (y == 1) {
-                    diff = 1000000;
-                    rho = heightWaterMap[x + mapDims.mapx * y];
+                // We consider the map has an infinite wall at y = 0, so we bypass the actual values
+                rho = heightWaterMap[x + mapDims.mapx * y];
+                diff =  std::numeric_limits<float>::infinity();
             }
             rho_new = flow_adjust (diff, rho);
 
+            // Based on the difference between how much water the cell should have
+            // and what it has, we adjust the flow
             waterMapFlowY[x + mapDims.mapx * y] += (rho_new - heightWaterMap[x + mapDims.mapx * y]);
             waterMapFlowY[x + mapDims.mapx * y] *= ATTENUATION;
         }
     }
 
-    // Perform flow adjustment. There is no 
-    unsigned execs = 0, change;
-    do {
-        execs++;
-        change = 0;
-        for (int x = 1; x < mapDims.mapxm1; x++) {
-            for (int y = 1; y < mapDims.mapym1; y++) {
-                float fl = waterMapFlowX[x + 1 + mapDims.mapx * y] + waterMapFlowY[x + mapDims.mapx * (y + 1)] - waterMapFlowX[x + mapDims.mapx * y] - waterMapFlowY[x + mapDims.mapx * y];
-                if (fl > THRESHOLD && (fl - heightWaterMap[x + mapDims.mapx * y]) > THRESHOLD) {
-                    change = 1;
-///printf(" flow is %8.3f rho is %8.3f \n",fl,heightWaterMap[x+mapDims.mapx*y]);
-                    if (heightWaterMap[x + mapDims.mapx * y] > THRESHOLD) {
-                        float r = fl / heightWaterMap[x + mapDims.mapx * y];
-
-                        waterMapFlowX[x + 1 + mapDims.mapx * y] /= r;
-                        waterMapFlowY[x + mapDims.mapx * (y + 1)] /= r;
-
-                        waterMapFlowX[x + mapDims.mapx * y] /= r;
-                        waterMapFlowY[x + mapDims.mapx * y] /= r;
-                    }
-                    else {
-                        waterMapFlowX[x + 1 + mapDims.mapx * y] = 0;
-                        waterMapFlowY[x + mapDims.mapx * (y + 1)] = 0;
-
-                        waterMapFlowX[x + mapDims.mapx * y] = 0;
-                        waterMapFlowY[x + mapDims.mapx * y] = 0;
-                    }
-                }
-            }
-        }
-        //       printf("flow adjustment change = %d\n",change);
-    }
-    while (change == 1 && execs < LIMIT_EXECS);
-
     for (int x = 1; x < mapDims.mapxm1; x++) {
         for (int y = 1; y < mapDims.mapym1; y++) {
-            float fl = waterMapFlowX[x + 1 + mapDims.mapx * y] + waterMapFlowY[x + mapDims.mapx * (y + 1)] - waterMapFlowX[x + mapDims.mapx * y] - waterMapFlowY[x + mapDims.mapx * y];
-            if (fl < heightWaterMap[x + mapDims.mapx * y]) {
-                heightWaterMap[x + mapDims.mapx * y] -= fl;
+            // Compute the flow into this cell
+            float flow = waterMapFlowX[x + 1 + mapDims.mapx * y] + waterMapFlowY[x + mapDims.mapx * (y + 1)] - waterMapFlowX[x + mapDims.mapx * y] - waterMapFlowY[x + mapDims.mapx * y];
+            if (heightWaterMap[x + mapDims.mapx * y] > flow) {
+                // Adjust the water height
+                heightWaterMap[x + mapDims.mapx * y] -= flow;
                 if (heightWaterMap[x + mapDims.mapx * y] < THRESHOLD) {
                     heightWaterMap[x + mapDims.mapx * y] = 0;
                     waterMapFlowX[x + mapDims.mapx * y] = 0;
                     waterMapFlowY[x + mapDims.mapx * y] = 0;
                 }
-            }
-            else {
+            } else {
                 heightWaterMap[x + mapDims.mapx * y] = 0;
             }
         }
@@ -146,7 +128,8 @@ void CHeightFieldWaterUpdaterBasic::UpdateStep() {
     int cnt = 0;
     float rho_adjust;
     do {
-        // Number of squares that have some water
+        // Number of squares that have some water, to redistribute any water lost
+        // due to numerical approximations
         int nonZero = 0;
         volumeNew = 0;
         for (int x = 0; x < mapDims.mapx; x++) {
@@ -172,6 +155,18 @@ void CHeightFieldWaterUpdaterBasic::UpdateStep() {
     
     if(cnt==10) {
         printf("ERROR: water volume redistribution failing!");
+    }
+    
+    // For drawing reasons, we put the water on the edges same as their immediate
+    // neighbor
+    for (int x = 0; x < mapDims.mapx; x++) {
+        heightWaterMap[x + mapDims.mapx * 0] = heightWaterMap[x + mapDims.mapx * 1];
+        heightWaterMap[x + mapDims.mapx * (mapDims.mapy-1)] = heightWaterMap[x + mapDims.mapx * (mapDims.mapy-2)];
+    }
+    
+    for (int y = 0; y < mapDims.mapy; y++) {
+        heightWaterMap[0 + mapDims.mapx * y] = heightWaterMap[1 + mapDims.mapx * y];
+        heightWaterMap[mapDims.mapx-1 + mapDims.mapx * y] = heightWaterMap[mapDims.mapx-2 + mapDims.mapx * y];
     }
 }
 
