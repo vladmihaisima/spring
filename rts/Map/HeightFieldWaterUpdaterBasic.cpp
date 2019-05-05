@@ -13,7 +13,6 @@ float flow_adjust(float diff, float r)
     if(diff > 0) {
         // The other cell is higher, water flows to the current cell
         if(diff<r) {
-            
             r_new = (r - diff)/2+diff;
         } else {
             // All water flows to the current cell
@@ -47,12 +46,13 @@ void CHeightFieldWaterUpdaterBasic::UpdateStep() {
     
     float volumeInitial = 0, volumeNew = 0;
     
-    const float THRESHOLD = 0.1f;
+    const float THRESHOLD = 0.2f;
+    const float ATTENUATION = 0.99f;
 
     for (int x = 0; x < mapDims.mapx; x++) {
-            for (int y = 0; y < mapDims.mapy; y++) {
-                    volumeInitial += heightWaterMap[(y) * mapDims.mapx + x];
-            }
+        for (int y = 0; y < mapDims.mapy; y++) {
+            volumeInitial += heightWaterMap[(y) * mapDims.mapx + x];
+        }
     }
     
     // If the map is dry don't perform any computation
@@ -62,10 +62,7 @@ void CHeightFieldWaterUpdaterBasic::UpdateStep() {
     
     // We make an "approximation" - the edges of the map are considered to be 
     // an infinite height wall. This means there will be no flow from/to those
-    // locations, and we do not update/compute them.
-
-#define ATTENUATION 0.98
-#define LIMIT_EXECS 3
+    // locations, and we do not update/compute their water height.
 
     // Compute the flows in cell x,y based on the water and terrain height of
     // neighbor cells. 
@@ -112,15 +109,9 @@ void CHeightFieldWaterUpdaterBasic::UpdateStep() {
         for (int y = 1; y < mapDims.mapym1; y++) {
             // Compute the flow into this cell
             float flow = waterMapFlowX[x + 1 + mapDims.mapx * y] + waterMapFlowY[x + mapDims.mapx * (y + 1)] - waterMapFlowX[x + mapDims.mapx * y] - waterMapFlowY[x + mapDims.mapx * y];
-            if (heightWaterMap[x + mapDims.mapx * y] > flow) {
-                // Adjust the water height
-                heightWaterMap[x + mapDims.mapx * y] -= flow;
-                if (heightWaterMap[x + mapDims.mapx * y] < THRESHOLD) {
-                    heightWaterMap[x + mapDims.mapx * y] = 0;
-                    waterMapFlowX[x + mapDims.mapx * y] = 0;
-                    waterMapFlowY[x + mapDims.mapx * y] = 0;
-                }
-            } else {
+            // Adjust the water height
+            heightWaterMap[x + mapDims.mapx * y] -= flow;
+            if (heightWaterMap[x + mapDims.mapx * y] < THRESHOLD) {
                 heightWaterMap[x + mapDims.mapx * y] = 0;
             }
         }
@@ -157,7 +148,7 @@ void CHeightFieldWaterUpdaterBasic::UpdateStep() {
         printf("ERROR: water volume redistribution failing!");
     }
     
-    // For drawing reasons, we put the water on the edges same as their immediate
+    // For drawing purposes, we put the water on the edges same as their immediate
     // neighbor
     for (int x = 0; x < mapDims.mapx; x++) {
         heightWaterMap[x + mapDims.mapx * 0] = heightWaterMap[x + mapDims.mapx * 1];
