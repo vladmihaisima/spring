@@ -5,6 +5,19 @@
 
 #include "IWater.h"
 
+typedef struct {
+    bool processed;         // If this tile was solved at this or higher level
+    bool drawn;             // If this tile must be drawn
+    unsigned char level;    // Level at which this tile was drawn
+    float height;
+} waterLODStruct;
+
+// NOTE: a tile processed but not drawn is a tile with ground
+
+typedef struct {
+    int x,y,stride;
+} waterLODSizeStruct;
+
 class CHeightFieldWaterBasic : public IWater
 {
 public:
@@ -19,12 +32,9 @@ public:
 private:
 	unsigned int GenWaterDynamicQuadsList(unsigned int textureWidth, unsigned int textureHeight);
         
-        void drawTile(const float* centerHeightMap, const float* heightWaterMap, 
+        void drawTile(float h_x_y, float h_x1_y, float h_x_y1, float h_x1_y1, 
             int x, int y, int dx, int dy, float repeatX, float repeatY);
         
-        void drawWaterLOD(const float* centerHeightMap, const float* heightWaterMap, 
-            int x, int y, int tileX, int tileY, float repeatX, float repeatY);
-
 	unsigned int textureID;
 	unsigned int displistID;
         
@@ -36,6 +46,11 @@ private:
         const float threshold;
         
         const float alpha;
+        
+        int levels;
+        
+        waterLODSizeStruct *waterLODSize;
+        waterLODStruct **waterLOD;
 };
 
 #endif // HEIGHT_FIELD_WATER_BASIC_H
