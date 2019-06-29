@@ -9,10 +9,10 @@ typedef struct {
     bool processed;         // If this tile was solved at this or higher level
     bool drawn;             // If this tile must be drawn
     unsigned char level;    // Level at which this tile was drawn
-    float height;
+    float height;           // Height of ground + water
 } waterLODStruct;
 
-// NOTE: a tile processed but not drawn is a tile with ground
+// NOTE: a tile processed but not drawn is a tile without water
 
 typedef struct {
     int x,y,stride;
@@ -44,6 +44,7 @@ private:
 	const float mapSizeY;
         
         const float threshold;
+        const float thresholdDiff;
         
         const float alpha;
         
@@ -51,6 +52,12 @@ private:
         
         waterLODSizeStruct *waterLODSize;
         waterLODStruct **waterLOD;
+        
+        void computeEdge(int level, int x, int y, int dx, int dy, bool compute);
+        
+        waterLODStruct& get(int level, int x, int y);
+        
+        float getMapHeight(int level, int x, int y);
 };
 
 #endif // HEIGHT_FIELD_WATER_BASIC_H
