@@ -238,29 +238,39 @@ CHeightFieldWaterBasic::GenWaterDynamicQuadsList (unsigned int textureWidth, uns
                     }
                 }   
                 if(!above) {
+                    // None or few water
                     get(i,xL,yL).processed = true;
                     get(i,xL,yL).drawn = false;
                     continue;
                 }
 
-                // Determine the min and max in the tile at current lod
+                // Determine if there is few variation over the tile, which allows
+                // us to draw at this lod level. Compute the min and max in the tile
                 float minH = centerHeightMap[yM * mapDims.mapx + xM] + heightWaterMap[yM * mapDims.mapx + xM];
                 float maxH = centerHeightMap[yM * mapDims.mapx + xM] + heightWaterMap[yM * mapDims.mapx + xM];
+                // For large tiles with small variation, we want to check that enough
+                // points have actual water (think lowest granularity and one corner
+                // with some water, we do not want to draw whole tile as 'filled')
+                int belowThreshold = 0;
                 float dist = maxH-minH;
                 for (int x = xM; x <= xM + waterLODSize[i].stride && dist<thresholdDiff; x++) {
                     for (int y = yM; y <= yM + waterLODSize[i].stride && dist<thresholdDiff; y++) {
                         minH = std::min(centerHeightMap[y * mapDims.mapx + x] + heightWaterMap[y * mapDims.mapx + x], minH); 
                         maxH = std::max(centerHeightMap[y * mapDims.mapx + x] + heightWaterMap[y * mapDims.mapx + x], maxH); 
                         dist = maxH-minH;
+                        if(heightWaterMap[y * mapDims.mapx + x]<threshold) belowThreshold++;
                     }
                 }
-                // We draw if small variation or we are at the most fine grained lod
-                if(dist < thresholdDiff || i==0) {
+
+                if((dist < thresholdDiff && belowThreshold<waterLODSize[i].stride*waterLODSize[i].stride/8)|| i==0) {
+                    // Small variations in water level and a lot of points with 
+                    // actual water, or finest level of lod, we draw
                     get(i,xL,yL).processed = true;
                     get(i,xL,yL).drawn = true;
                     get(i,xL,yL).level = i;
                     continue;
                 } else {
+                    // Large variations in water level do not process at this level
                     get(i,xL,yL).processed = false;
                     get(i,xL,yL).drawn = false;
                 }
@@ -268,13 +278,17 @@ CHeightFieldWaterBasic::GenWaterDynamicQuadsList (unsigned int textureWidth, uns
         }
     } 
 
+    // TODO: decide to draw tiles neighboring shore tiles (to close gaps due
+    // to map adjustments of mesh)
+    // We want to draw tiles that are bordering the ground. Can happen that one
+    // of the corners is with water, but below threshold, then tile would not get
+    // drawn but gap could between ground and other tiles
+    
     // Initialize all the heights at the level at which they are drawn
     for (i=levels-1;i>=0;i--) {
         for (int xL = 0; xL < waterLODSize[i].x-1; xL++) {
             for (int yL = 0; yL < waterLODSize[i].y-1; yL++) {
                 // We need to compute heights only for the drawn levels
-                // TODO: without this works?! Why?
-                // TODO (vladms): don't need to compute for all, but if only for drawn we get problems with update... to be fixed
                 if(get(i,xL,yL).drawn==false) {
                     continue;
                 }
@@ -303,7 +317,7 @@ CHeightFieldWaterBasic::GenWaterDynamicQuadsList (unsigned int textureWidth, uns
             }
         }
     }
-    
+        
     // Compute the heights on the edges of each tile. Do it top down, and adjust
     // the finer levels in case the neighbor cell is coarser and hence impose
     // a certain height.
@@ -317,9 +331,6 @@ CHeightFieldWaterBasic::GenWaterDynamicQuadsList (unsigned int textureWidth, uns
             }
         }
     }
-    
-    // TODO: decide to draw tiles neighboring shore tiles (to close gaps due
-    // to map adjustments of mesh)
       
     for (i=levels-1;i>=0;i--) {
         for (int xL = 0; xL < waterLODSize[i].x-1; xL++) {
