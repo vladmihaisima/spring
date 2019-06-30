@@ -160,6 +160,11 @@ waterLODStruct& CHeightFieldWaterBasic::get(int level, int x, int y) {
     return waterLOD[level][y*waterLODSize[level].x + x];
 }
 
+void CHeightFieldWaterBasic::heightInit(const float* centerHeightMap, const float* heightWaterMap, int level, int xL, int yL, int xM, int yM, float& max) {
+    get(level,xL  ,yL  ).height = centerHeightMap[yM  * mapDims.mapx + xM ] + heightWaterMap[yM  * mapDims.mapx + xM ];
+    if(heightWaterMap[yM  * mapDims.mapx + xM ]>threshold && max<get(level,xL  ,yL  ).height) max = get(level,xL  ,yL  ).height;
+}
+
 unsigned int
 CHeightFieldWaterBasic::GenWaterDynamicQuadsList (unsigned int textureWidth, unsigned int textureHeight)
 {
@@ -277,12 +282,24 @@ CHeightFieldWaterBasic::GenWaterDynamicQuadsList (unsigned int textureWidth, uns
                 int xM = xL * waterLODSize[i].stride;   // x in Map coordinates
                 int yM = yL * waterLODSize[i].stride;   // y in Map coordinates
                 int xM1 = (xL+1) * waterLODSize[i].stride;   // x in Map coordinates
-                int yM1 = (yL+1) * waterLODSize[i].stride;   // y in Map coordinates                
-                get(i,xL  ,yL  ).height = centerHeightMap[yM  * mapDims.mapx + xM ] + heightWaterMap[yM  * mapDims.mapx + xM ];
-                get(i,xL+1,yL  ).height = centerHeightMap[yM  * mapDims.mapx + xM1] + heightWaterMap[yM  * mapDims.mapx + xM1];
-                get(i,xL  ,yL+1).height = centerHeightMap[yM1 * mapDims.mapx + xM ] + heightWaterMap[yM1 * mapDims.mapx + xM ];
-                get(i,xL+1,yL+1).height = centerHeightMap[yM1 * mapDims.mapx + xM1] + heightWaterMap[yM1 * mapDims.mapx + xM1];
+                int yM1 = (yL+1) * waterLODSize[i].stride;   // y in Map coordinates  
                 
+                // For the case in which at least one of the corners of the tile does not have water, but the land
+                // height is higher than the sum of water and land heights in the other corners (think hill surrounded
+                // by water), the water would "stick" upwards on the slope. We tone the effect down,
+                // by making the height the maximum of the others.
+                
+                float max = std::numeric_limits<float>::min();
+                
+                heightInit(centerHeightMap, heightWaterMap, i, xL  , yL  , xM , yM , max);
+                heightInit(centerHeightMap, heightWaterMap, i, xL+1, yL  , xM1, yM , max);
+                heightInit(centerHeightMap, heightWaterMap, i, xL  , yL+1, xM , yM1, max);
+                heightInit(centerHeightMap, heightWaterMap, i, xL+1, yL+1, xM1, yM1, max);
+                
+                if(heightWaterMap[yM  * mapDims.mapx + xM ]<threshold) get(i,xL  ,yL  ).height = max;
+                if(heightWaterMap[yM  * mapDims.mapx + xM1]<threshold) get(i,xL+1,yL  ).height = max;
+                if(heightWaterMap[yM1 * mapDims.mapx + xM ]<threshold) get(i,xL  ,yL+1).height = max;
+                if(heightWaterMap[yM1 * mapDims.mapx + xM1]<threshold) get(i,xL+1,yL+1).height = max;
             }
         }
     }

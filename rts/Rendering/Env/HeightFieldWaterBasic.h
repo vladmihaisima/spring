@@ -56,8 +56,11 @@ private:
         void computeEdge(int level, int x, int y, int dx, int dy, bool compute);
         
         waterLODStruct& get(int level, int x, int y);
+        void heightInit(const float* centerHeightMap, const float* heightWaterMap,int level, int xL, int yL, int xM, int yM, float& max);
         
         float getMapHeight(int level, int x, int y);
+        
+        
 };
 
 #endif // HEIGHT_FIELD_WATER_BASIC_H
