@@ -18,7 +18,7 @@
 CHeightFieldWaterBasic::CHeightFieldWaterBasic() : 
     mapSizeX(mapDims.mapx * SQUARE_SIZE), 
     mapSizeY(mapDims.mapy * SQUARE_SIZE),
-    threshold(0.1f), thresholdDiff(10.0f), alpha(1.0f) 
+    threshold(0.1f), thresholdDiff(10.0f), alpha(0.6f) 
 {
 	CBitmap waterTexBM;
 	if (!waterTexBM.Load(waterRendering->texture)) {
@@ -38,9 +38,10 @@ CHeightFieldWaterBasic::CHeightFieldWaterBasic() :
         waterLODSize = new waterLODSizeStruct[levels];
         int x = mapDims.mapx, y = mapDims.mapy;
         for(i=0;i<levels;i++) {
-            waterLOD[i] = new waterLODStruct[x*y]();
-            waterLODSize[i].x = x;
-            waterLODSize[i].y = y;
+            waterLOD[i] = new waterLODStruct[(x+1)*(y+1)]();
+            // We add one such that we have some padding to the tiles on the map edges
+            waterLODSize[i].x = x+1;
+            waterLODSize[i].y = y+1;
             waterLODSize[i].stride = stride;
             if(x<4||y<4) {
                 break;
@@ -202,14 +203,6 @@ CHeightFieldWaterBasic::GenWaterDynamicQuadsList (unsigned int textureWidth, uns
     // Reinitialize the structures
     for (i=levels-1;i>=0;i--) {
         memset(waterLOD[i], 0, sizeof(waterLODStruct)*waterLODSize[i].x*waterLODSize[i].y);
-//        for (int xL = 0; xL < waterLODSize[i].x-1; xL++) {
-//            for (int yL = 0; yL < waterLODSize[i].y-1; yL++) {
-//                get(i,xL,yL).processed = false;
-//                get(i,xL,yL).drawn = false;
-//                get(i,xL,yL).level = 0;
-//                get(i,xL,yL).height = 0;
-//            }
-//        }
     }
 
     // First pass, determine at which lod levels are relevant (have water and
