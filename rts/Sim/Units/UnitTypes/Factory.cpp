@@ -202,7 +202,7 @@ void CFactory::UpdateBuild(CUnit* buildee) {
 
 	// note: basically StaticMoveType::SlowUpdate()
 	if (buildee->FloatOnWater() && buildee->IsInWater())
-		buildeePos.y = -buildee->moveType->GetWaterline();
+		buildeePos.y = -buildee->moveType->GetWaterline() + CGround::GetHeightWater(buildeePos.x, buildeePos.z);
 
 	// rotate unit nanoframe with platform
 	buildee->Move(buildeePos, false);

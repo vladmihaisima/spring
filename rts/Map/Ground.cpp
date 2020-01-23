@@ -446,6 +446,12 @@ float CGround::GetHeightAboveWater(float x, float z, bool synced)
 	return std::max(0.0f, GetHeightReal(x, z, synced));
 }
 
+float CGround::GetHeightWater(float x, float z, bool synced)
+{
+	return InterpolateHeight(x, z, readMap->GetHeightWaterMapSynced());
+}
+
+
 float CGround::GetHeightReal(float x, float z, bool synced)
 {
 	return InterpolateHeight(x, z, readMap->GetSharedCornerHeightMap(synced));

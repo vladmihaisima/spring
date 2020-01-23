@@ -309,6 +309,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetProjectileDamages);
 
 	REGISTER_LUA_CFUNC(GetGroundHeight);
+        REGISTER_LUA_CFUNC(GetWaterHeight);
 	REGISTER_LUA_CFUNC(GetGroundOrigHeight);
 	REGISTER_LUA_CFUNC(GetGroundNormal);
 	REGISTER_LUA_CFUNC(GetGroundInfo);
@@ -5174,6 +5175,14 @@ int LuaSyncedRead::GetGroundHeight(lua_State* L)
 	const float x = luaL_checkfloat(L, 1);
 	const float z = luaL_checkfloat(L, 2);
 	lua_pushnumber(L, CGround::GetHeightReal(x, z, CLuaHandle::GetHandleSynced(L)));
+	return 1;
+}
+
+int LuaSyncedRead::GetWaterHeight(lua_State* L)
+{
+	const float x = luaL_checkfloat(L, 1);
+	const float z = luaL_checkfloat(L, 2);
+	lua_pushnumber(L, CGround::GetHeightWater(x, z, CLuaHandle::GetHandleSynced(L)));
 	return 1;
 }
 

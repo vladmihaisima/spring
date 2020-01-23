@@ -1102,7 +1102,7 @@ void CGroundMoveType::UpdateControlledDrop()
 	owner->SetSpeed(spd);
 	owner->Move(spd, true);
 
-	if (alt <= 0.0f)
+	if (alt <= CGround::GetHeightWater(pos.x, pos.z))
 		return;
 
 	// ground impact, stop parachute animation
@@ -2397,7 +2397,7 @@ float CGroundMoveType::GetGroundHeight(const float3& p) const
 {
 	// in [minHeight, maxHeight]
 	const float gh = CGround::GetHeightReal(p.x, p.z);
-	const float wh = -waterline * (gh <= 0.0f);
+	const float wh = gh + CGround::GetHeightWater(p.x, p.z);
 
 	// in [-waterline, maxHeight], note that waterline
 	// can be much deeper than ground in shallow water
@@ -2416,7 +2416,7 @@ void CGroundMoveType::AdjustPosToWaterLine()
 
 	if (modInfo.allowGroundUnitGravity) {
 		if (owner->FloatOnWater()) {
-			owner->Move(UpVector * (std::max(CGround::GetHeightReal(owner->pos.x, owner->pos.z),   -waterline) - owner->pos.y), true);
+			owner->Move(UpVector * (CGround::GetHeightReal(owner->pos.x, owner->pos.z) + CGround::GetHeightWater(owner->pos.x, owner->pos.z)) - owner->pos.y, true);
 		} else {
 			owner->Move(UpVector * (std::max(CGround::GetHeightReal(owner->pos.x, owner->pos.z), owner->pos.y) - owner->pos.y), true);
 		}

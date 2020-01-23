@@ -15,6 +15,7 @@ public:
 	static float GetApproximateHeightUnsafe(int x, int z, bool synced = true);
 	/// Returns the height at the specified position, cropped to a non-negative value
 	static float GetHeightAboveWater(float x, float z, bool synced = true);
+        static float GetHeightWater(float x, float z, bool synced = true);
 	/// Returns the real height at the specified position, can be below 0
 	static float GetHeightReal(float x, float z, bool synced = true);
 	static float GetOrigHeight(float x, float z);
