@@ -65,6 +65,58 @@ static inline float InterpolateHeight(float x, float z, const float* heightmap)
 	return h;
 }
 
+// TODO (vladms): this would not be requird if waterRho would be stored as corners
+static inline float InterpolateHeightCenter(float x, float z, const float* heightmap)
+{
+	// NOTE:
+	// This isn't a bilinear interpolation. Instead it interpolates
+	// on the 2 triangles that form the ground quad:
+	//
+	// TL __________ TR
+	//    |        /|
+	//    | dx+dz / |
+	//    | \<1  /  |
+	//    |     /   |
+	//    |    /    |
+	//    |   /     |
+	//    |  / dx+dz|
+	//    | /  \>=1 |
+	//    |/        |
+	// BL ---------- BR
+
+	x = Clamp(x, 0.0f, float3::maxxpos) / SQUARE_SIZE;
+	z = Clamp(z, 0.0f, float3::maxzpos) / SQUARE_SIZE;
+
+	const int isx = x;
+	const int isz = z;
+	const float dx = x - isx;
+	const float dz = z - isz;
+	const int hs = isx + isz * mapDims.mapx;
+
+	float h = 0.0f;
+
+	if (dx + dz < 1.0f) {
+		// top-left triangle
+		const float h00 = heightmap[hs                 ];
+		const float h10 = heightmap[hs + 1             ];
+		const float h01 = heightmap[hs     + mapDims.mapx];
+		const float xdif = dx * (h10 - h00);
+		const float zdif = dz * (h01 - h00);
+
+		h = h00 + xdif + zdif;
+	} else {
+		// bottom-right triangle
+		const float h10 = heightmap[hs + 1             ];
+		const float h11 = heightmap[hs + 1 + mapDims.mapx];
+		const float h01 = heightmap[hs     + mapDims.mapx];
+		const float xdif = (1.0f - dx) * (h01 - h11);
+		const float zdif = (1.0f - dz) * (h10 - h11);
+
+		h = h11 + xdif + zdif;
+	}
+
+	return h;
+}
 
 static inline float LineGroundSquareCol(
 	const float* heightmap,
@@ -440,15 +492,21 @@ float CGround::GetApproximateHeightUnsafe(int x, int z, bool synced)
 	return heightMap[z * mapDims.mapx + x];
 }
 
-
 float CGround::GetHeightAboveWater(float x, float z, bool synced)
 {
-	return std::max(0.0f, GetHeightReal(x, z, synced));
+        //return std::max(0.0f, GetHeightReal(x, z, synced));
+	return GetHeightWater(x, z, synced) + GetHeightReal(x, z, synced);
 }
 
 float CGround::GetHeightWater(float x, float z, bool synced)
 {
-	return InterpolateHeight(x, z, readMap->GetHeightWaterMapSynced());
+	return InterpolateHeightCenter(x, z, readMap->GetHeightWaterMapSynced());
+}
+
+float3 CGround::GetImpulseWater(float x, float z, bool synced)
+{
+        // NOTE: MapFlow is having X and Y, but they map to x and z of real map
+	return float3(InterpolateHeightCenter(x, z, readMap->GetWaterMapFlowXSynced()), 0, InterpolateHeightCenter(x, z, readMap->GetWaterMapFlowYSynced()));
 }
 
 

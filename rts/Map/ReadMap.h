@@ -159,6 +159,8 @@ public:
 	const float* GetOriginalHeightMapSynced() const { return &originalHeightMap[0]; }
 	const float* GetCenterHeightMapSynced() const { return &centerHeightMap[0]; }
 	const float* GetHeightWaterMapSynced() const { return &waterMapRho[0]; }
+        const float* GetWaterMapFlowXSynced() const { return &waterMapFlowX[0]; }
+        const float* GetWaterMapFlowYSynced() const { return &waterMapFlowY[0]; }
 	const float* GetMIPHeightMapSynced(unsigned int mip) const { return mipPointerHeightMaps[mip]; }
 	const float* GetSlopeMapSynced() const { return &slopeMap[0]; }
 	const uint8_t* GetTypeMapSynced() const { return &typeMap[0]; }
@@ -199,7 +201,8 @@ public:
 	float GetBoundingRadius() const { return boundingRadius; }
 
 	bool IsUnderWater() const { return (currHeightBounds.y <  0.0f); }
-	bool IsAboveWater() const { return (currHeightBounds.x >= 0.0f); }
+        // We force always to be with water, as with dynamic we dont know. TODO: read from option?
+	bool IsAboveWater() const { return false; /*(currHeightBounds.x >= 0.0f);*/ }
 
 	bool HasVisibleWater() const;
 	bool HasOnlyVoidWater() const;
@@ -237,6 +240,7 @@ protected:
 	// Height field water vectors (rho - quantity of water, flow - rate of change)
 	std::vector<float> waterMapRho;          //< size: (mapx  )*(mapy  ) (per face) [SYNCED, updates on terrain deformation]
 	std::vector<float> waterMapFlowX;        //< size: (mapx  )*(mapy  ) (per face) [SYNCED, updates on terrain deformation]
+        // TODO (vladms): maybe rename to Z to be more consistent
 	std::vector<float> waterMapFlowY;        //< size: (mapx  )*(mapy  ) (per face) [SYNCED, updates on terrain deformation]
 
 	/**

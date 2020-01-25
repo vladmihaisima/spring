@@ -105,7 +105,7 @@ inline static void FindMaximumColumnHeights(
 		for (int x = 0; x <= maxx; ++x)  {
 			const float curx = x * resolution;
 			const float cury = y * resolution;
-			const float curh = CGround::GetHeightAboveWater(curx, cury);
+			const float curh = /*water*/CGround::GetHeightReal(curx, cury);
 
 			if (curh > colsMaxima[x]) {
 				colsMaxima[x] = curh;
@@ -128,7 +128,7 @@ inline static void AdvanceMaximaRows(
 	for (int x = 0; x <= maxx; ++x) {
 		if (maximaRows[x] == (y - 1)) {
 			const float curx = x * resolution;
-			const float curh = CGround::GetHeightAboveWater(curx, cury);
+			const float curh = /*water*/CGround::GetHeightReal(curx, cury);
 
 			if (curh == colsMaxima[x]) {
 				maximaRows[x] = y;
@@ -169,8 +169,9 @@ inline static void FindRadialMaximum(
 
 #ifndef NDEBUG
 		const float curx = x * resolution;
-		assert(maxRowHeight <= std::max(readMap->GetCurrMaxHeight(), 0.0f));
-		assert(maxRowHeight >= CGround::GetHeightAboveWater(curx, cury));
+                // TODO (vladms): not true in case we have dynamic water
+		//assert(maxRowHeight <= std::max(readMap->GetCurrMaxHeight(), 0.0f));
+		assert(maxRowHeight >= /*water*/CGround::GetHeightReal(curx, cury));
 
 	#ifdef SMOOTHMESH_CORRECTNESS_CHECK
 		// naive algorithm
@@ -178,7 +179,7 @@ inline static void FindRadialMaximum(
 
 		for (float y1 = cury - smoothRadius; y1 <= cury + smoothRadius; y1 += resolution) {
 			for (float x1 = curx - smoothRadius; x1 <= curx + smoothRadius; x1 += resolution) {
-				maxRowHeightAlt = std::max(maxRowHeightAlt, CGround::GetHeightAboveWater(x1, y1));
+				maxRowHeightAlt = std::max(maxRowHeightAlt, /*water*/CGround::GetHeightReal(x1, y1));
 			}
 		}
 
@@ -218,7 +219,7 @@ inline static void FixRemainingMaxima(
 			colsMaxima[x] = -std::numeric_limits<float>::max();
 
 			for (int y1 = std::max(0, y - winSize + 1); y1 <= std::min(maxy, nextrow); ++y1) {
-				const float h = CGround::GetHeightAboveWater(curx, y1 * resolution);
+				const float h = /*water*/CGround::GetHeightReal(curx, y1 * resolution);
 
 				if (h > colsMaxima[x]) {
 					colsMaxima[x] = h;
@@ -230,7 +231,7 @@ inline static void FixRemainingMaxima(
 			}
 		} else if (nextrow <= maxy) {
 			// else, just check if a new maximum has entered the window
-			const float h = CGround::GetHeightAboveWater(curx, nextrowy);
+			const float h = /*water*/CGround::GetHeightReal(curx, nextrowy);
 
 			if (h > colsMaxima[x]) {
 				colsMaxima[x] = h;
@@ -284,7 +285,7 @@ inline static void BlurHorizontal(
 					smoothed[idx] += mesh[x1 + y * lineSize];
 				}
 
-				const float gh = CGround::GetHeightAboveWater(x * resolution, y * resolution);
+				const float gh = /*water*/CGround::GetHeightReal(x * resolution, y * resolution);
 				const float sh = smoothed[idx] / (xend - xstart + 1);
 
 				smoothed[idx] = std::min(readMap->GetCurrMaxHeight(), std::max(gh, sh));
@@ -292,7 +293,7 @@ inline static void BlurHorizontal(
 				// non-border case
 				avg += mesh[idx + blurSize] - mesh[idx - blurSize - 1];
 
-				const float gh = CGround::GetHeightAboveWater(x * resolution, y * resolution);
+				const float gh = /*water*/CGround::GetHeightReal(x * resolution, y * resolution);
 				const float sh = recipn * avg;
 
 				smoothed[idx] = std::min(readMap->GetCurrMaxHeight(), std::max(gh, sh));
@@ -337,7 +338,7 @@ inline static void BlurVertical(
 					smoothed[idx] += mesh[x + y1 * lineSize];
 				}
 
-				const float gh = CGround::GetHeightAboveWater(x * resolution, y * resolution);
+				const float gh = /*water*/CGround::GetHeightReal(x * resolution, y * resolution);
 				const float sh = smoothed[idx] / (yend - ystart + 1);
 
 				smoothed[idx] = std::min(readMap->GetCurrMaxHeight(), std::max(gh, sh));
@@ -345,7 +346,7 @@ inline static void BlurVertical(
 				// non-border case
 				avg += mesh[x + (y + blurSize) * lineSize] - mesh[x + (y - blurSize - 1) * lineSize];
 
-				const float gh = CGround::GetHeightAboveWater(x * resolution, y * resolution);
+				const float gh = /*water*/CGround::GetHeightReal(x * resolution, y * resolution);
 				const float sh = recipn * avg;
 
 				smoothed[idx] = std::min(readMap->GetCurrMaxHeight(), std::max(gh, sh));
@@ -373,7 +374,8 @@ inline static void CheckInvariants(
 		for (int x = 0; x <= maxx; ++x) {
 			assert(maximaRows[x] > y - winSize);
 			assert(maximaRows[x] <= maxy);
-			assert(colsMaxima[x] <= std::max(readMap->GetCurrMaxHeight(), 0.0f));
+                        // TODO (vladms): not true in case we have dynamic water
+			//assert(colsMaxima[x] <= std::max(readMap->GetCurrMaxHeight(), 0.0f));
 			assert(colsMaxima[x] >=          readMap->GetCurrMinHeight()       );
 		}
 	}

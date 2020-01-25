@@ -188,18 +188,27 @@ CReadMap* CReadMap::LoadMap(const std::string& mapName)
                 // height less than 0 (as 0 is the default water level)
                 
                 // TODO(vladms): should be given values according to water height
-                for(int x=0;x<mapDims.mapx;x++) {
-                        for(int y=0;y<mapDims.mapy;y++) {
-                                if(rm->centerHeightMap[y*mapDims.mapx+x]<0) {
-                                        rm->waterMapRho[y*mapDims.mapx+x] = -rm->centerHeightMap[y*mapDims.mapx+x];
-                                };
-                                
-                                // TODO (vlamds): for debug, remove later
-                                if(x>mapDims.mapx/2 && y>mapDims.mapy/2) {
-                                        rm->waterMapRho[y*mapDims.mapx+x] = 200;
-                                }
+//                for(int x=mapDims.mapx/3;x<mapDims.mapx/3*2;x++) {
+//                        for(int y=mapDims.mapy/3;y<mapDims.mapy/3*2;y++) {
+//                                if(rm->centerHeightMap[y*mapDims.mapx+x]<0) {
+//                                        rm->waterMapRho[y*mapDims.mapx+x] = -rm->centerHeightMap[y*mapDims.mapx+x];
+//                                };
+//                                
+//                                // TODO (vlamds): for debug, remove later
+//                                if(x>mapDims.mapx/2 && y>mapDims.mapy/2) {
+//                                        rm->waterMapRho[y*mapDims.mapx+x] = 400;
+//                                }
+//                        }
+//                }
+                
+                
+                // Sets one side of map with water
+                for(int y=0;y<mapDims.mapy/6;y++) {
+                    for(int x=0;x<mapDims.mapx;x++) {
+                            rm->waterMapRho[y*mapDims.mapx+x] = 300 - rm->centerHeightMap[y*mapDims.mapx+x];
                         }
                 }
+                
             } else {
                 // TODO (vladms): do the conversion
                 LOG_L(L_WARNING, "[CReadMap::%s] water map loading not implemented for map \"%s\"", __func__, mapName.c_str());
