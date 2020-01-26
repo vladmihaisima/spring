@@ -3,7 +3,19 @@
 #include "HeightFieldWaterUpdaterBasic.h"
 #include "ReadMap.h"
 
+#include "Sim/Path/IPathManager.h"
+#include "Sim/Objects/SolidObject.h"
+
 CHeightFieldWaterUpdaterBasic::CHeightFieldWaterUpdaterBasic(CReadMap* map):IHeightFieldWaterUpdater(map) {
+    waterMapRhoPrevious.resize(mapDims.mapx * mapDims.mapy);
+    waterMapRhoDiff.resize(mapDims.mapx * mapDims.mapy);
+    
+    // TODO (vlamds): whats best way to initialize, memset?
+    for (int x = 0; x < mapDims.mapx; x++) {
+        for (int y = 0; y < mapDims.mapy; y++) {
+            waterMapRhoPrevious[(y) * mapDims.mapx + x] = 0.0f;
+        }
+    }
 }
 
 // Returns new water height in a cell, based on the difference with its neighbor
@@ -54,7 +66,6 @@ void CHeightFieldWaterUpdaterBasic::UpdateStep() {
             volumeInitial += heightWaterMap[(y) * mapDims.mapx + x];
         }
     }
-    
     // If the map is dry don't perform any computation
     if(volumeInitial < THRESHOLD) {
         return;
@@ -159,5 +170,44 @@ void CHeightFieldWaterUpdaterBasic::UpdateStep() {
         heightWaterMap[0 + mapDims.mapx * y] = heightWaterMap[1 + mapDims.mapx * y];
         heightWaterMap[mapDims.mapx-1 + mapDims.mapx * y] = heightWaterMap[mapDims.mapx-2 + mapDims.mapx * y];
     }
+    
+    UpdateTerrain();
+
 }
 
+void CHeightFieldWaterUpdaterBasic::UpdateTerrain() {
+    float* heightWaterMap = this->GetHeightWaterMap();
+    
+    float change = 0.0f;
+    for (int x = 0; x < mapDims.mapx; x++) {
+        for (int y = 0; y < mapDims.mapy; y++) {
+            change += heightWaterMap[(y) * mapDims.mapx + x] - waterMapRhoPrevious[(y) * mapDims.mapx + x];
+        }
+    }
+    
+    // TODO (vladms): invoke TerrainChange once we think is necessary (i.e. not every frame)
+    static int call = 0;
+    call ++; call = call % 30;
+    
+    // TODO (vladms): is this a good threshold?
+    if(change<100.0f && call==0) {
+        return;
+    }
+    
+    for (int x = 0; x < mapDims.mapx; x++) {
+        for (int y = 0; y < mapDims.mapy; y++) {
+            waterMapRhoDiff[(y) * mapDims.mapx + x] = heightWaterMap[(y) * mapDims.mapx + x] - waterMapRhoPrevious[(y) * mapDims.mapx + x];
+        }
+    }
+    
+    // TODO (vlamds): based on waterMapRhoDiff make smaller updates!
+    pathManager->TerrainChange(0, 0, mapDims.mapxm1, mapDims.mapym1, TERRAINCHANGE_DAMAGE_RECALCULATION);
+    
+    // TODO (vlamds): whats best way to copy, memcpy?
+    for (int x = 0; x < mapDims.mapx; x++) {
+        for (int y = 0; y < mapDims.mapy; y++) {
+            waterMapRhoPrevious[(y) * mapDims.mapx + x] = heightWaterMap[(y) * mapDims.mapx + x];
+        }
+    }
+    
+}

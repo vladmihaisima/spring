@@ -2422,6 +2422,11 @@ void CGroundMoveType::AdjustPosToWaterLine()
 		}
 	} else {
 		owner->Move(UpVector * (GetGroundHeight(owner->pos) - owner->pos.y), true);
+                
+                // TODO (vladms) - should it be smaller for underwater?...
+                if (CGround::GetHeightWater(owner->pos.x,owner->pos.z) > 0.01) {
+                    owner->Move( CGround::GetImpulseWater(owner->pos.x, owner->pos.z)/6, true);
+                }
 	}
 }
 

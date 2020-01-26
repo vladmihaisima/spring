@@ -202,10 +202,18 @@ CReadMap* CReadMap::LoadMap(const std::string& mapName)
 //                }
                 
                 
-                // Sets one side of map with water
-                for(int y=0;y<mapDims.mapy/6;y++) {
-                    for(int x=0;x<mapDims.mapx;x++) {
-                            rm->waterMapRho[y*mapDims.mapx+x] = 300 - rm->centerHeightMap[y*mapDims.mapx+x];
+                // Sets one side of map with water - good for FolsomDamCoreV0.95
+//                for(int y=0;y<mapDims.mapy/6;y++) {
+//                    for(int x=0;x<mapDims.mapx;x++) {
+//                            rm->waterMapRho[y*mapDims.mapx+x] = 300 - rm->centerHeightMap[y*mapDims.mapx+x];
+//                        }
+//                }
+                
+                
+                  // Sets one crater with water - good for MoonQ10x
+                for(int z=500/SQUARE_SIZE;z<900/SQUARE_SIZE;z++) {
+                    for(int x=550/SQUARE_SIZE;x<1050/SQUARE_SIZE;x++) {
+                            rm->waterMapRho[z*mapDims.mapx+x] = 350 - rm->centerHeightMap[z*mapDims.mapx+x];
                         }
                 }
                 
@@ -216,6 +224,25 @@ CReadMap* CReadMap::LoadMap(const std::string& mapName)
         }
 
 	return rm;
+}
+
+void CReadMap::AddWater(float x, float z, float amount) {
+    int mx = Clamp(x, 0.0f, float3::maxxpos) / SQUARE_SIZE;
+    int mz = Clamp(z, 0.0f, float3::maxzpos) / SQUARE_SIZE;
+
+    // TODO (vladms): hackish, to get a bigger quantity of water out...
+    for (int ix=-2;ix<=2;ix++) {
+        for (int iz=-2;iz<=2;iz++) {
+            int wx = mx + ix;
+            int wz = mz + iz;
+            waterMapRho[wx + wz * mapDims.mapx] += amount;
+
+            if(waterMapRho[wx + wz * mapDims.mapx]<0) {
+                waterMapRho[wx + wz * mapDims.mapx] = 0;
+            }
+        }
+    }
+
 }
 
 #ifdef USING_CREG

@@ -1007,6 +1007,13 @@ void CUnit::SlowUpdate()
 	UpdatePosErrorParams(false, true);
 
 	DoWaterDamage();
+        
+        if (this->radarRadius==2100) {
+            readMap->AddWater(pos.x, pos.z, 100);
+        }
+        if (this->radarRadius==4000) { 
+            readMap->AddWater(pos.x, pos.z, -100);
+        }
 
 	if (health < 0.0f) {
 		KillUnit(nullptr, false, true);
