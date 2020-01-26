@@ -201,6 +201,7 @@ void CHeightFieldWaterUpdaterBasic::UpdateTerrain() {
     }
     
     // TODO (vlamds): based on waterMapRhoDiff make smaller updates!
+    readMap->UpdateHeightMapSynced(SRectangle(0, 0, mapDims.mapxm1, mapDims.mapym1));
     pathManager->TerrainChange(0, 0, mapDims.mapxm1, mapDims.mapym1, TERRAINCHANGE_DAMAGE_RECALCULATION);
     
     // TODO (vlamds): whats best way to copy, memcpy?

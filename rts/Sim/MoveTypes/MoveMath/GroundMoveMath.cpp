@@ -25,7 +25,7 @@ float CMoveMath::GroundSpeedMod(const MoveDef& moveDef, float height, float heig
 	return speedMod;
 }
 
-float CMoveMath::GroundSpeedMod(const MoveDef& moveDef, float height, float heightWater, float slope, float dirSlopeMod)
+float CMoveMath::GroundSpeedModDir(const MoveDef& moveDef, float height, float heightWater, float slope, float dirSlopeMod)
 {
 	if (!modInfo.allowDirectionalPathing) {
 		return GroundSpeedMod(moveDef, height, heightWater, slope);
@@ -40,7 +40,7 @@ float CMoveMath::GroundSpeedMod(const MoveDef& moveDef, float height, float heig
 		return speedMod;
 
 	// is this square below our maxWaterDepth and are we going further downhill?
-	if ((dirSlopeMod <= 0.0f) && (-height > moveDef.depth))
+	if ((dirSlopeMod <= 0.0f) && (heightWater > moveDef.depth))
 		return speedMod;
 
 	// slope-mod (speedMod is not increased or decreased by downhill slopes)

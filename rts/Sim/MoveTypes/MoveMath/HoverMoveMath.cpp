@@ -19,7 +19,7 @@ float CMoveMath::HoverSpeedMod(const MoveDef& moveDef, float height, float heigh
 	return (1.0f / (1.0f + slope * moveDef.slopeMod));
 }
 
-float CMoveMath::HoverSpeedMod(const MoveDef& moveDef, float height, float heightWater, float slope, float dirSlopeMod)
+float CMoveMath::HoverSpeedModDir(const MoveDef& moveDef, float height, float heightWater, float slope, float dirSlopeMod)
 {
 	if (!modInfo.allowDirectionalPathing) {
 		return HoverSpeedMod(moveDef, height, heightWater, slope);
@@ -28,7 +28,7 @@ float CMoveMath::HoverSpeedMod(const MoveDef& moveDef, float height, float heigh
 	// Only difference direction can have is making hills climbing slower.
 
 	// no speed-penalty if on water
-	if (height < 0.0f)
+	if (heightWater > 0.0f)
 		return (1.0f * !noHoverWaterMove);
 
 	if (slope > moveDef.maxSlope)

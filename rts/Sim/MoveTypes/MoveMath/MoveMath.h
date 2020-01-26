@@ -13,12 +13,13 @@ class CMoveMath {
 	CR_DECLARE(CMoveMath)
 
 protected:
+        // Note (delete after merging), function names with same name but 4 or 5 floats as parameters can introduce insidous bugs
 	static float GroundSpeedMod(const MoveDef& moveDef, float height, float heightWater, float slope);
-	static float GroundSpeedMod(const MoveDef& moveDef, float height, float heightWater, float slope, float dirSlopeMod);
+	static float GroundSpeedModDir(const MoveDef& moveDef, float height, float heightWater, float slope, float dirSlopeMod);
 	static float HoverSpeedMod(const MoveDef& moveDef, float height, float heightWater, float slope);
-	static float HoverSpeedMod(const MoveDef& moveDef, float height, float heightWater, float slope, float dirSlopeMod);
+	static float HoverSpeedModDir(const MoveDef& moveDef, float height, float heightWater, float slope, float dirSlopeMod);
 	static float ShipSpeedMod(const MoveDef& moveDef, float height, float heightWater, float slope);
-	static float ShipSpeedMod(const MoveDef& moveDef, float height, float heightWater, float slope, float dirSlopeMod);
+	static float ShipSpeedModDir(const MoveDef& moveDef, float height, float heightWater, float slope, float dirSlopeMod);
 
 public:
 	// gives the y-coordinate the unit will "stand on"
