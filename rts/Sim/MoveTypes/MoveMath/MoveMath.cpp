@@ -54,16 +54,17 @@ float CMoveMath::GetPosSpeedMod(const MoveDef& moveDef, unsigned xSquare, unsign
 	const int square = (xSquare >> 1) + ((zSquare >> 1) * mapDims.hmapx);
 	const int squareTerrType = readMap->GetTypeMapSynced()[square];
 
-	const float height  = readMap->GetMIPHeightMapSynced(1)[square];
+	const float heightGround  = readMap->GetMIPHeightMapSynced(1)[square];
+        const float heightWater   = readMap->GetMIPHeightWaterMapSynced(1)[square];
 	const float slope   = readMap->GetSlopeMapSynced()[square];
 
 	const CMapInfo::TerrainType& tt = mapInfo->terrainTypes[squareTerrType];
 
 	switch (moveDef.speedModClass) {
-		case MoveDef::Tank:  { return (GroundSpeedMod(moveDef, height, slope) * tt.tankSpeed ); } break;
-		case MoveDef::KBot:  { return (GroundSpeedMod(moveDef, height, slope) * tt.kbotSpeed ); } break;
-		case MoveDef::Hover: { return ( HoverSpeedMod(moveDef, height, slope) * tt.hoverSpeed); } break;
-		case MoveDef::Ship:  { return (  ShipSpeedMod(moveDef, height, slope) * tt.shipSpeed ); } break;
+		case MoveDef::Tank:  { return (GroundSpeedMod(moveDef, heightGround, heightWater, slope) * tt.tankSpeed ); } break;
+		case MoveDef::KBot:  { return (GroundSpeedMod(moveDef, heightGround, heightWater, slope) * tt.kbotSpeed ); } break;
+		case MoveDef::Hover: { return ( HoverSpeedMod(moveDef, heightGround, heightWater, slope) * tt.hoverSpeed); } break;
+		case MoveDef::Ship:  { return (  ShipSpeedMod(moveDef, heightGround, heightWater, slope) * tt.shipSpeed ); } break;
 		default: {} break;
 	}
 

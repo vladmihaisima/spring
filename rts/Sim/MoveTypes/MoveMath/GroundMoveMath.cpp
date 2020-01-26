@@ -7,16 +7,16 @@
 /*
 Calculate speed-multiplier for given height and slope data.
 */
-float CMoveMath::GroundSpeedMod(const MoveDef& moveDef, float height, float slope)
+float CMoveMath::GroundSpeedMod(const MoveDef& moveDef, float height, float heightWater, float slope)
 {
 	float speedMod = 0.0f;
 
 	// slope too steep or square too deep?
 	if (slope > moveDef.maxSlope)
 		return speedMod;
-	if (-height > moveDef.depth)
-		return speedMod;
-
+	if (heightWater > moveDef.depth)
+                return speedMod;
+		
 	// slope-mod
 	speedMod = 1.0f / (1.0f + slope * moveDef.slopeMod);
 	speedMod *= ((height < 0.0f)? waterDamageCost: 1.0f);
@@ -25,10 +25,10 @@ float CMoveMath::GroundSpeedMod(const MoveDef& moveDef, float height, float slop
 	return speedMod;
 }
 
-float CMoveMath::GroundSpeedMod(const MoveDef& moveDef, float height, float slope, float dirSlopeMod)
+float CMoveMath::GroundSpeedMod(const MoveDef& moveDef, float height, float heightWater, float slope, float dirSlopeMod)
 {
 	if (!modInfo.allowDirectionalPathing) {
-		return GroundSpeedMod(moveDef, height, slope);
+		return GroundSpeedMod(moveDef, height, heightWater, slope);
 	}
 	// Directional speed is now equal to regular except when:
 	// 1) Climbing out of places which are below max depth.

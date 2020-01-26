@@ -158,10 +158,12 @@ public:
 	/// synced only
 	const float* GetOriginalHeightMapSynced() const { return &originalHeightMap[0]; }
 	const float* GetCenterHeightMapSynced() const { return &centerHeightMap[0]; }
+        const float* GetMIPHeightMapSynced(unsigned int mip) const { return mipPointerHeightMaps[mip]; }
 	const float* GetHeightWaterMapSynced() const { return &waterMapRho[0]; }
+        const float* GetMIPHeightWaterMapSynced(unsigned int mip) const { return mipPointerWaterRhoMaps[mip]; }
         const float* GetWaterMapFlowXSynced() const { return &waterMapFlowX[0]; }
         const float* GetWaterMapFlowYSynced() const { return &waterMapFlowY[0]; }
-	const float* GetMIPHeightMapSynced(unsigned int mip) const { return mipPointerHeightMaps[mip]; }
+	
 	const float* GetSlopeMapSynced() const { return &slopeMap[0]; }
 	const uint8_t* GetTypeMapSynced() const { return &typeMap[0]; }
 	      uint8_t* GetTypeMapSynced()       { return &typeMap[0]; }
@@ -216,6 +218,7 @@ public:
 private:
 	void UpdateCenterHeightmap(const SRectangle& rect, bool initialize);
 	void UpdateMipHeightmaps(const SRectangle& rect, bool initialize);
+        void UpdateMipWaterHeightmaps(const SRectangle& rect, bool initialize);
 	void UpdateFaceNormals(const SRectangle& rect, bool initialize);
 	void UpdateSlopemap(const SRectangle& rect, bool initialize);
 
@@ -239,11 +242,13 @@ protected:
 	static std::vector<float> centerHeightMap;          //< size: (mapx  )*(mapy  ) (per face) [SYNCED, updates on terrain deformation]
 	static std::array<std::vector<float>, numHeightMipMaps - 1> mipCenterHeightMaps;
 
+        // TODO (vladms): rename from waterMapRho to waterRhoMap (same for flow) to be more consistent with centerHeightMap, etc.
 	// Height field water vectors (rho - quantity of water, flow - rate of change)
-	std::vector<float> waterMapRho;          //< size: (mapx  )*(mapy  ) (per face) [SYNCED, updates on terrain deformation]
-	std::vector<float> waterMapFlowX;        //< size: (mapx  )*(mapy  ) (per face) [SYNCED, updates on terrain deformation]
+	static std::vector<float> waterMapRho;          //< size: (mapx  )*(mapy  ) (per face) [SYNCED, updates on terrain deformation]
+        static std::array<std::vector<float>, numHeightMipMaps - 1> mipWaterRhoMaps;
+	static std::vector<float> waterMapFlowX;        //< size: (mapx  )*(mapy  ) (per face) [SYNCED, updates on terrain deformation]
         // TODO (vladms): maybe rename to Z to be more consistent
-	std::vector<float> waterMapFlowY;        //< size: (mapx  )*(mapy  ) (per face) [SYNCED, updates on terrain deformation]
+	static std::vector<float> waterMapFlowY;        //< size: (mapx  )*(mapy  ) (per face) [SYNCED, updates on terrain deformation]
 
 	/**
 	 * array of pointers to heightmaps in different resolutions
@@ -251,7 +256,14 @@ protected:
 	 * mipPointerHeightMaps[n+1] is half resolution of mipPointerHeightMaps[n] (mipCenterHeightMaps[n - 1])
 	 */
 	std::array<float*, numHeightMipMaps> mipPointerHeightMaps;
-
+        
+	/**
+	 * array of pointers to water rho maps in different resolutions
+	 * mipPointerWaterRhoMaps[0  ] is full resolution (waterMapRho)
+	 * mipPointerWaterRhoMaps[n+1] is half resolution of mipPointerWaterRhoMaps[n] (mipWaterRhoMaps[n - 1])
+	 */
+	std::array<float*, numHeightMipMaps> mipPointerWaterRhoMaps;
+  
 	static std::vector<float3> visVertexNormals;      //< size:  (mapx + 1) * (mapy + 1), contains one vertex normal per corner-heightmap pixel [UNSYNCED]
 	static std::vector<float3> faceNormalsSynced;     //< size: 2*mapx      *  mapy     , contains 2 normals per quad -> triangle strip [SYNCED]
 	static std::vector<float3> faceNormalsUnsynced;   //< size: 2*mapx      *  mapy     , contains 2 normals per quad -> triangle strip [UNSYNCED]

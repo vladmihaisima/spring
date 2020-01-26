@@ -6,7 +6,7 @@
 /*
 Calculate speed-multiplier for given height and slope data.
 */
-float CMoveMath::ShipSpeedMod(const MoveDef& moveDef, float height, float slope)
+float CMoveMath::ShipSpeedMod(const MoveDef& moveDef, float height, float heightWater, float slope)
 {
 	if (-height < moveDef.depth)
 		return 0.0f;
@@ -14,7 +14,7 @@ float CMoveMath::ShipSpeedMod(const MoveDef& moveDef, float height, float slope)
 	return 1.0f;
 }
 
-float CMoveMath::ShipSpeedMod(const MoveDef& moveDef, float height, float slope, float dirSlopeMod)
+float CMoveMath::ShipSpeedMod(const MoveDef& moveDef, float height, float heightWater, float slope, float dirSlopeMod)
 {
 	// uphill slopes can lead even closer to shore, so
 	// block movement if we are above our minWaterDepth

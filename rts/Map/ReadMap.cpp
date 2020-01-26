@@ -114,6 +114,11 @@ std::vector<float> CReadMap::originalHeightMap;
 std::vector<float> CReadMap::centerHeightMap;
 std::array<std::vector<float>, CReadMap::numHeightMipMaps - 1> CReadMap::mipCenterHeightMaps;
 
+std::vector<float> CReadMap::waterMapRho;
+std::array<std::vector<float>, CReadMap::numHeightMipMaps - 1> CReadMap::mipWaterRhoMaps;
+std::vector<float> CReadMap::waterMapFlowX;
+std::vector<float> CReadMap::waterMapFlowY;
+
 std::vector<float3> CReadMap::visVertexNormals;
 std::vector<float3> CReadMap::faceNormalsSynced;
 std::vector<float3> CReadMap::faceNormalsUnsynced;
@@ -394,6 +399,16 @@ void CReadMap::Initialize()
 
 		mipPointerHeightMaps[i] = &mipCenterHeightMaps[i - 1][0];
 	}
+        
+        mipPointerWaterRhoMaps.fill(nullptr);
+	mipPointerWaterRhoMaps[0] = &waterMapRho[0];
+        
+        for (int i = 1; i < numHeightMipMaps; i++) {
+		mipWaterRhoMaps[i - 1].clear();
+		mipWaterRhoMaps[i - 1].resize((mapDims.mapx >> i) * (mapDims.mapy >> i));
+                
+                mipPointerWaterRhoMaps[i] = &mipWaterRhoMaps[i - 1][0];
+	}
 
 	slopeMap.clear();
 	slopeMap.resize(mapDims.hmapx * mapDims.hmapy);
@@ -565,6 +580,7 @@ void CReadMap::UpdateHeightMapSynced(SRectangle hmRect, bool initialize)
 
 	UpdateCenterHeightmap(hmRect, initialize);
 	UpdateMipHeightmaps(hmRect, initialize);
+        UpdateMipWaterHeightmaps(hmRect, initialize);
 	UpdateFaceNormals(hmRect, initialize);
 	UpdateSlopemap(hmRect, initialize); // must happen after UpdateFaceNormals()!
 
@@ -645,6 +661,31 @@ void CReadMap::UpdateMipHeightmaps(const SRectangle& rect, bool initialize)
 	}
 }
 
+// TODO (vladms): could be refactored together with UpdateMipHeightmaps by adding one more parameter, but maybe when attempting merge, to minimize conflicts
+void CReadMap::UpdateMipWaterHeightmaps(const SRectangle& rect, bool initialize)
+{
+	for (int i = 0; i < numHeightMipMaps - 1; i++) {
+		const int hmapx = mapDims.mapx >> i;
+
+		const int sx = (rect.x1 >> i) & (~1);
+		const int ex = (rect.x2 >> i);
+		const int sy = (rect.z1 >> i) & (~1);
+		const int ey = (rect.z2 >> i);
+		float* topMipMap = mipPointerWaterRhoMaps[i];
+		float* subMipMap = mipPointerWaterRhoMaps[i + 1];
+
+		for (int y = sy; y < ey; y += 2) {
+			for (int x = sx; x < ex; x += 2) {
+				const float height =
+					topMipMap[(x    ) + (y    ) * hmapx] +
+					topMipMap[(x    ) + (y + 1) * hmapx] +
+					topMipMap[(x + 1) + (y    ) * hmapx] +
+					topMipMap[(x + 1) + (y + 1) * hmapx];
+				subMipMap[(x / 2) + (y / 2) * hmapx / 2] = height * 0.25f;
+			}
+		}
+	}
+}
 
 void CReadMap::UpdateFaceNormals(const SRectangle& rect, bool initialize)
 {

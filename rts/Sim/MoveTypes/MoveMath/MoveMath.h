@@ -13,12 +13,12 @@ class CMoveMath {
 	CR_DECLARE(CMoveMath)
 
 protected:
-	static float GroundSpeedMod(const MoveDef& moveDef, float height, float slope);
-	static float GroundSpeedMod(const MoveDef& moveDef, float height, float slope, float dirSlopeMod);
-	static float HoverSpeedMod(const MoveDef& moveDef, float height, float slope);
-	static float HoverSpeedMod(const MoveDef& moveDef, float height, float slope, float dirSlopeMod);
-	static float ShipSpeedMod(const MoveDef& moveDef, float height, float slope);
-	static float ShipSpeedMod(const MoveDef& moveDef, float height, float slope, float dirSlopeMod);
+	static float GroundSpeedMod(const MoveDef& moveDef, float height, float heightWater, float slope);
+	static float GroundSpeedMod(const MoveDef& moveDef, float height, float heightWater, float slope, float dirSlopeMod);
+	static float HoverSpeedMod(const MoveDef& moveDef, float height, float heightWater, float slope);
+	static float HoverSpeedMod(const MoveDef& moveDef, float height, float heightWater, float slope, float dirSlopeMod);
+	static float ShipSpeedMod(const MoveDef& moveDef, float height, float heightWater, float slope);
+	static float ShipSpeedMod(const MoveDef& moveDef, float height, float heightWater, float slope, float dirSlopeMod);
 
 public:
 	// gives the y-coordinate the unit will "stand on"
