@@ -19,6 +19,7 @@ protected:
         // Difference between previous and current waterMapRho
         std::vector<float> waterMapRhoDiff;
         
+        void UpdateHeight();
         // Sends the relevant updates for pathing
         void UpdateTerrain();
             

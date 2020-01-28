@@ -580,7 +580,9 @@ void CReadMap::UpdateHeightMapSynced(SRectangle hmRect, bool initialize)
 
 	UpdateCenterHeightmap(hmRect, initialize);
 	UpdateMipHeightmaps(hmRect, initialize);
-        UpdateMipWaterHeightmaps(hmRect, initialize);
+        if(gameSetup->heightFieldWater==0) {
+            UpdateMipWaterHeightmaps(hmRect, initialize);
+        }
 	UpdateFaceNormals(hmRect, initialize);
 	UpdateSlopemap(hmRect, initialize); // must happen after UpdateFaceNormals()!
 

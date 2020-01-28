@@ -6,6 +6,8 @@
 #include "Sim/Path/IPathManager.h"
 #include "Sim/Objects/SolidObject.h"
 
+#include "System/TimeProfiler.h"
+
 CHeightFieldWaterUpdaterBasic::CHeightFieldWaterUpdaterBasic(CReadMap* map):IHeightFieldWaterUpdater(map) {
     waterMapRhoPrevious.resize(mapDims.mapx * mapDims.mapy);
     waterMapRhoDiff.resize(mapDims.mapx * mapDims.mapy);
@@ -43,11 +45,42 @@ float flow_adjust(float diff, float r)
 }
 
 void CHeightFieldWaterUpdaterBasic::UpdateStep() {
+    {
+        SCOPED_TIMER("Sim::IHeightFieldWaterUpdater::UpdateStep");
+        
+        // TODO (vladms): invoke UpdateHeight once we think is necessary (i.e. not every frame)
+        static int call = 0;
+        call ++; call = call % 2;
+    
+        // TODO (vladms): invoke UpdateHeight only from time to time. Should be a parameter. What default?
+        if(call!=0) {
+            return;
+        }
+        
+        this->UpdateHeight();
+    }
+    {
+        SCOPED_TIMER("Sim::HeightFieldWaterUpdaterBasic::UpdateTerrain");
+        
+        // TODO (vladms): invoke UpdateTerrain only from time to time. Should be a parameter. What default?
+        static int call = 0;
+        call ++; call = call % 50;
+
+        // TODO (vladms): is this a good threshold?
+        if(call!=0) {
+            return;
+        }
+    
+        this->UpdateTerrain();
+    }
+}
+    
+void CHeightFieldWaterUpdaterBasic::UpdateHeight() {
     // For reference see:
     // http://matthias-mueller-fischer.ch/talks/GDC2008.pdf
     // http://isg.cs.tcd.ie/cosulliv/Pubs/LeeShallowEqs.pdf
     const float* const centerHeightMap = map->GetCenterHeightMapSynced();
-  
+      
     float* heightWaterMap = this->GetHeightWaterMap();
     
     // How much water flows from cell x,y to cell x-1, y
@@ -171,11 +204,9 @@ void CHeightFieldWaterUpdaterBasic::UpdateStep() {
         heightWaterMap[mapDims.mapx-1 + mapDims.mapx * y] = heightWaterMap[mapDims.mapx-2 + mapDims.mapx * y];
     }
     
-    UpdateTerrain();
-
 }
 
-void CHeightFieldWaterUpdaterBasic::UpdateTerrain() {
+void CHeightFieldWaterUpdaterBasic::UpdateTerrain() {                
     float* heightWaterMap = this->GetHeightWaterMap();
     
     float change = 0.0f;
@@ -185,12 +216,8 @@ void CHeightFieldWaterUpdaterBasic::UpdateTerrain() {
         }
     }
     
-    // TODO (vladms): invoke TerrainChange once we think is necessary (i.e. not every frame)
-    static int call = 0;
-    call ++; call = call % 30;
-    
     // TODO (vladms): is this a good threshold?
-    if(change<100.0f && call==0) {
+    if(change<1000.0f) {
         return;
     }
     

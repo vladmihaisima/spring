@@ -10,6 +10,7 @@
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "System/Log/ILog.h"
+#include "System/TimeProfiler.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -169,6 +170,8 @@ void CHeightFieldWaterBasic::heightInit(const float* centerHeightMap, const floa
 unsigned int
 CHeightFieldWaterBasic::GenWaterDynamicQuadsList (unsigned int textureWidth, unsigned int textureHeight)
 {
+    SCOPED_TIMER("Render::CHeightFieldWaterBasic::GenWaterDynamicQuadsList");
+        
     unsigned int listID = glGenLists (1);
 
     glNewList (listID, GL_COMPILE);
@@ -364,9 +367,16 @@ void CHeightFieldWaterBasic::Draw()
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE * wireFrameMode + GL_FILL * (1 - wireFrameMode));
     glPolygonMode(GL_FRONT, GL_LINE * wireFrameMode + GL_FILL * (1 - wireFrameMode));
 
-    glDeleteLists(displistID, 1);
-    displistID = GenWaterDynamicQuadsList(tx,ty);
-
+    // TODO (vladms): invoke TerrainChange once we think is necessary (i.e. not every frame)
+    static int call = 0;
+    call ++; call = call % 3;
+    
+    // TODO (vladms): is this a good threshold?
+    if(call==0) {
+        glDeleteLists(displistID, 1);
+        displistID = GenWaterDynamicQuadsList(tx,ty);
+    }
+    
     glCallList(displistID);
     glPopAttrib();
 }
